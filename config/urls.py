@@ -12,7 +12,9 @@ urlpatterns = [
     path('api/', include('appointments.urls')),
     path('api/', include('patients.urls')),
     path('api/', include('doctors.urls')),
+    path('api/', include('users.urls')),
 
     path('api/token/', TokenObtainPairView.as_view()),
     path('api/token/refresh/', TokenRefreshView.as_view()),
+
 ]
