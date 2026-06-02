@@ -17,15 +17,22 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = [
             'id',
-
             'doctor',
             'patient',
-
             'doctor_name',
             'patient_name',
-
             'date',
             'time',
             'status',
             'notes'
         ]
+
+    # 🔥 VALIDACIÓN BÁSICA (opcional pero recomendado)
+    def validate(self, data):
+        if not data.get("date"):
+            raise serializers.ValidationError("La fecha es obligatoria")
+
+        if not data.get("time"):
+            raise serializers.ValidationError("La hora es obligatoria")
+
+        return data

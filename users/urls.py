@@ -1,7 +1,13 @@
+from django.urls import path
 from rest_framework.routers import DefaultRouter
-from .views import UserViewSet
+
+from .views import UserViewSet, me
 
 router = DefaultRouter()
-router.register('users', UserViewSet)
+router.register(r'users', UserViewSet)
 
 urlpatterns = router.urls
+
+urlpatterns += [
+    path('me/', me),
+]

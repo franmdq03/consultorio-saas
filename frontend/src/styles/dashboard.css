@@ -1,0 +1,12 @@
+.dashboard-container {
+  width: 100%;
+}
+
+.dashboard-card {
+  border-radius: 12px;
+  transition: 0.2s;
+}
+
+.dashboard-card:hover {
+  transform: scale(1.02);
+}

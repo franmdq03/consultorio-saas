@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import api from "../services/api";
 
+import { toast } from "react-toastify";
+import { ClipLoader } from "react-spinners";
+
 function Doctors() {
   const [doctors, setDoctors] = useState([]);
+  const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
 
   const [user, setUser] = useState("");
@@ -11,13 +15,21 @@ function Doctors() {
   const [phone, setPhone] = useState("");
 
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchDoctors = async () => {
     try {
+      setLoading(true);
+
       const response = await api.get("/doctors/");
       setDoctors(response.data);
+
     } catch (error) {
       console.error(error);
+      toast.error("Error al cargar médicos");
+
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,7 +50,7 @@ function Doctors() {
         phone,
       });
 
-      alert("Médico creado");
+      toast.success("Médico creado correctamente");
 
       setUser("");
       setSpecialty("");
@@ -47,7 +59,7 @@ function Doctors() {
       fetchDoctors();
     } catch (error) {
       console.error(error);
-      alert("Error al crear médico");
+      toast.error("Error al crear médico");
     }
   };
 
@@ -67,7 +79,7 @@ function Doctors() {
         phone,
       });
 
-      alert("Médico actualizado");
+      toast.success("Médico actualizado");
 
       setEditingId(null);
       setUser("");
@@ -77,8 +89,15 @@ function Doctors() {
       fetchDoctors();
     } catch (error) {
       console.error(error);
-      alert("Error al actualizar");
+      toast.error("Error al actualizar médico");
     }
+  };
+
+  const clearForm = () => {
+    setEditingId(null);
+    setUser("");
+    setSpecialty("");
+    setPhone("");
   };
 
   const deleteDoctor = async (id) => {
@@ -91,12 +110,12 @@ function Doctors() {
     try {
       await api.delete(`/doctors/${id}/`);
 
-      alert("Médico eliminado");
+      toast.success("Médico eliminado");
 
       fetchDoctors();
     } catch (error) {
       console.error(error);
-      alert("Error al eliminar");
+      toast.error("Error al eliminar médico");
     }
   };
 
@@ -105,11 +124,24 @@ function Doctors() {
     fetchUsers();
   }, []);
 
+  const filteredDoctors = doctors.filter((doctor) =>
+    doctor.username.toLowerCase().includes(search.toLowerCase()) ||
+    doctor.specialty.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <ClipLoader size={60} />
+      </div>
+    );
+  }
+
   return (
     <div className="d-flex">
       <Sidebar />
 
-      <div className="container-fluid p-4">
+      <div className="container-fluid p-4 page-enter">
 
         <h1 className="mb-4">Médicos</h1>
 
@@ -170,12 +202,23 @@ function Doctors() {
           </div>
 
           {editingId ? (
-            <button
-              className="btn btn-success"
-              onClick={updateDoctor}
-            >
-              Actualizar
-            </button>
+            <div className="d-flex gap-2">
+
+              <button
+                className="btn btn-success"
+                onClick={updateDoctor}
+              >
+                Actualizar
+              </button>
+
+              <button
+                className="btn btn-secondary"
+                onClick={clearForm}
+              >
+                Cancelar
+              </button>
+
+            </div>
           ) : (
             <button
               className="btn btn-primary"
@@ -189,6 +232,16 @@ function Doctors() {
 
         <div className="card p-3 shadow-sm">
 
+          <div className="mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Buscar por usuario o especialidad..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
           <table className="table table-striped table-hover">
             <thead>
               <tr>
@@ -201,7 +254,7 @@ function Doctors() {
             </thead>
 
             <tbody>
-              {doctors.map((doctor) => (
+              {filteredDoctors.map((doctor) => (
                 <tr key={doctor.id}>
                   <td>{doctor.id}</td>
                   <td>{doctor.username}</td>

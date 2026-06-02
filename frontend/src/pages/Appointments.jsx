@@ -2,8 +2,13 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import api from "../services/api";
 
+import { toast } from "react-toastify";
+import { ClipLoader } from "react-spinners";
+
 function Appointments() {
   const [appointments, setAppointments] = useState([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
 
@@ -15,13 +20,21 @@ function Appointments() {
   const [notes, setNotes] = useState("");
 
   const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchAppointments = async () => {
     try {
+      setLoading(true);
+
       const response = await api.get("/appointments/");
       setAppointments(response.data);
+
     } catch (error) {
       console.error(error);
+      toast.error("Error al cargar turnos");
+
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,13 +77,13 @@ function Appointments() {
         notes,
       });
 
-      alert("Turno creado");
+      toast.success("Turno creado correctamente");
 
       clearForm();
       fetchAppointments();
     } catch (error) {
       console.error(error);
-      alert("Error al crear turno");
+      toast.error("Error al crear turno");
     }
   };
 
@@ -96,13 +109,13 @@ function Appointments() {
         notes,
       });
 
-      alert("Turno actualizado");
+      toast.success("Turno actualizado");
 
       clearForm();
       fetchAppointments();
     } catch (error) {
       console.error(error);
-      alert("Error al actualizar");
+      toast.error("Error al actualizar turno");
     }
   };
 
@@ -116,11 +129,12 @@ function Appointments() {
     try {
       await api.delete(`/appointments/${id}/`);
 
-      alert("Turno eliminado");
+      toast.success("Turno eliminado");
 
       fetchAppointments();
     } catch (error) {
       console.error(error);
+      toast.error("Error al eliminar turno");
     }
   };
 
@@ -129,6 +143,30 @@ function Appointments() {
     fetchPatients();
     fetchDoctors();
   }, []);
+
+  const filteredAppointments = appointments.filter((appointment) => {
+    const matchesSearch =
+      appointment.patient_name
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      appointment.doctor_name
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "" ||
+      appointment.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <ClipLoader size={60} />
+      </div>
+    );
+  }
 
   return (
     <div className="d-flex">
@@ -253,12 +291,23 @@ function Appointments() {
           </div>
 
           {editingId ? (
-            <button
-              className="btn btn-success"
-              onClick={updateAppointment}
-            >
-              Actualizar
-            </button>
+            <div className="d-flex gap-2">
+
+              <button
+                className="btn btn-success"
+                onClick={updateAppointment}
+              >
+                Actualizar
+              </button>
+
+              <button
+                className="btn btn-secondary"
+                onClick={clearForm}
+              >
+                Cancelar
+              </button>
+
+            </div>
           ) : (
             <button
               className="btn btn-primary"
@@ -271,6 +320,46 @@ function Appointments() {
         </div>
 
         <div className="card p-3 shadow-sm">
+
+          <div className="row mb-3">
+
+            <div className="col-md-6">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Buscar paciente o médico..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+
+            <div className="col-md-3">
+              <select
+                className="form-select"
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value)
+                }
+              >
+                <option value="">
+                  Todos los estados
+                </option>
+
+                <option value="pending">
+                  Pendiente
+                </option>
+
+                <option value="confirmed">
+                  Confirmado
+                </option>
+
+                <option value="cancelled">
+                  Cancelado
+                </option>
+              </select>
+            </div>
+
+          </div>
 
           <table className="table table-striped table-hover">
             <thead>
@@ -287,14 +376,32 @@ function Appointments() {
             </thead>
 
             <tbody>
-              {appointments.map((appointment) => (
+              {filteredAppointments.map((appointment) => (
                 <tr key={appointment.id}>
                   <td>{appointment.id}</td>
                   <td>{appointment.patient_name}</td>
                   <td>{appointment.doctor_name}</td>
                   <td>{appointment.date}</td>
                   <td>{appointment.time}</td>
-                  <td>{appointment.status}</td>
+                  <td>
+                    {appointment.status === "pending" && (
+                      <span className="badge bg-warning">
+                        Pendiente
+                      </span>
+                    )}
+
+                    {appointment.status === "confirmed" && (
+                      <span className="badge bg-success">
+                        Confirmado
+                      </span>
+                    )}
+
+                    {appointment.status === "cancelled" && (
+                      <span className="badge bg-danger">
+                        Cancelado
+                      </span>
+                    )}
+                  </td>
                   <td>{appointment.notes}</td>
 
                   <td>

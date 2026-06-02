@@ -1,6 +1,7 @@
 import { useState } from "react";
 import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import "../styles/login.css";
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -22,6 +23,29 @@ function Login() {
         response.data.access
       );
 
+      const meResponse = await api.get("/me/", {
+        headers: {
+          Authorization: `Bearer ${response.data.access}`,
+        },
+      });
+
+      localStorage.setItem(
+        "role",
+        meResponse.data.role
+      );
+
+      localStorage.setItem(
+        "username",
+        meResponse.data.username
+      );
+
+      localStorage.setItem(
+        "userId",
+        meResponse.data.id
+      );
+
+
+
       navigate("/dashboard");
     } catch (error) {
       alert("Credenciales incorrectas");
@@ -31,16 +55,9 @@ function Login() {
 
   return (
     <div
-      className="d-flex justify-content-center align-items-center"
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f8f9fa",
-      }}
+      className="login-container d-flex justify-content-center align-items-center"
     >
-      <div
-        className="card shadow p-4"
-        style={{ width: "400px" }}
-      >
+      <div className="login-card card shadow p-4">
         <h2 className="text-center mb-4">
           Consultorio SaaS
         </h2>
